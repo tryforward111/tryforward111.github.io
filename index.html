@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>宁夏五地区气象数据展示</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        h1 { text-align: center; color: #333; }
+        .controls { text-align: center; margin: 20px 0; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background: #f2f2f2; font-weight: bold; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .update-time { text-align: center; margin: 10px 0; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>宁夏五地区气象数据实时展示</h1>
+    <div class="update-time">最后更新时间：<span id="lastUpdate">加载中...</span></div>
+    <div class="controls">
+        <button onclick="fetchWeather()">手动刷新数据</button>
+        <button onclick="triggerCrawl()">触发立即爬取</button>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>地区</th>
+                <th>时间</th>
+                <th>天气</th>
+                <th>温度</th>
+                <th>降水</th>
+                <th>风向</th>
+                <th>风力</th>
+                <th>空气质量</th>
+                <th>PM2.5</th>
+                <th>PM10</th>
+                <th>爬取时间</th>
+            </tr>
+        </thead>
+        <tbody id="weatherTable">
+            <tr><td colspan="11" style="text-align: center;">数据加载中...</td></tr>
+        </tbody>
+    </table>
+
+    <script>
+        // 后端接口地址（部署后替换为你的线上后端地址）
+        const API_URL = "https://你的后端域名/api/weather";
+        const CRAWL_URL = "https://你的后端域名/api/crawl";
+
+        // 页面加载时自动获取数据
+        window.onload = fetchWeather;
+        // 每5分钟自动刷新一次
+        setInterval(fetchWeather, 5 * 60 * 1000);
+
+        // 获取气象数据并渲染到表格
+        function fetchWeather() {
+            fetch(API_URL)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById("weatherTable");
+                    const lastUpdate = document.getElementById("lastUpdate");
+
+                    if (data.length === 0) {
+                        tableBody.innerHTML = "<tr><td colspan='11' style='text-align: center;'>暂无数据，请先触发爬取</td></tr>";
+                        return;
+                    }
+
+                    // 渲染表格数据
+                    let html = "";
+                    data.forEach(item => {
+                        html += `<tr>
+                            <td>${item.地区 || '-'}</td>
+                            <td>${item.时间 || '-'}</td>
+                            <td>${item.天气 || '-'}</td>
+                            <td>${item.温度 || '-'}</td>
+                            <td>${item.降水 || '-'}</td>
+                            <td>${item.风向 || '-'}</td>
+                            <td>${item.风力 || '-'}</td>
+                            <td>${item.空气质量 || '-'}</td>
+                            <td>${item.PM25 || '-'}</td>
+                            <td>${item.PM10 || '-'}</td>
+                            <td>${item.爬取时间 || '-'}</td>
+                        </tr>`;
+                    });
+                    tableBody.innerHTML = html;
+                    // 更新最后刷新时间
+                    lastUpdate.textContent = new Date().toLocaleString();
+                })
+                .catch(error => {
+                    console.error("获取数据失败：", error);
+                    document.getElementById("weatherTable").innerHTML = "<tr><td colspan='11' style='text-align: center;'>数据加载失败，请重试</td></tr>";
+                });
+        }
+
+        // 手动触发爬取
+        function triggerCrawl() {
+            fetch(CRAWL_URL)
+                .then(response => response.json())
+                .then(res => {
+                    alert(res.msg);
+                })
+                .catch(error => {
+                    alert("触发爬取失败，请稍后重试");
+                    console.error(error);
+                });
+        }
+    </script>
+</body>
+</html>
